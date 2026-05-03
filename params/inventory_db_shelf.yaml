@@ -1,7 +1,7 @@
 inventory_by_barcode:
   SKU_A01_L1:
     expected_location: "A-01-L1"
-    item_name: "A-01 1층 물품"
+    item_name: "grape"
     quantity: 21
     price: 3500
     inbound_date: "2026-04-01"

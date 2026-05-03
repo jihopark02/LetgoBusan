@@ -9,7 +9,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from warehouse_offboard.llm_selector import TargetSelector
+
 
 
 # ── 상태 → 한글 매핑 (이모지 없음) ───────────────────────────
@@ -60,15 +60,19 @@ class MissionUiBridge(Node):
     def __init__(self):
         super().__init__('mission_ui_bridge')
 
-        self.target_pub = self.create_publisher(String, '/mission_target_name', 10)
+        # llm_node로 자연어 입력 전달
+        self.user_input_pub = self.create_publisher(String, '/llm/user_input', 10)
+        # llm_node의 응답 텍스트 구독
+        self.response_sub = self.create_subscription(
+            String, '/llm/response_text', self.response_callback, 10)
         self.status_sub = self.create_subscription(
             String, '/mission_status_text', self.status_callback, 10)
-
-        self.selector = TargetSelector(['A-01', 'A-02', 'A-03', 'A-04'])
 
         self.latest_status = 'WAITING_FOR_COMMAND'
         # (friendly_text, raw, timestamp) 리스트
         self.status_history = []
+        # llm_node로부터 받은 응답 대기열
+        self.pending_responses = []
         self.get_logger().info('Mission UI Bridge initialized')
 
     def status_callback(self, msg: String):
@@ -80,11 +84,15 @@ class MissionUiBridge(Node):
             self.status_history.insert(0, (friendly, msg.data, ts))
         self.status_history = self.status_history[:40]
 
-    def publish_target(self, target_name: str):
+    def response_callback(self, msg: String):
+        """llm_node의 자연어 응답 수신"""
+        self.pending_responses.append(msg.data)
+
+    def publish_user_input(self, text: str):
         msg = String()
-        msg.data = target_name
-        self.target_pub.publish(msg)
-        self.get_logger().info(f'Published mission target: {target_name}')
+        msg.data = text
+        self.user_input_pub.publish(msg)
+        self.get_logger().info(f'Published user input to llm_node: {text}')
 
 
 class LLMInterface:
@@ -409,13 +417,24 @@ class LLMInterface:
     def _sync_status(self):
         raw = self.ros_node.latest_status
         if raw == self._prev_status:
-            return
-        self._prev_status = raw
+            pass
+        else:
+            self._prev_status = raw
+            if any(k in raw for k in ['MISSION_FINISHED', 'MISSION_STARTED',
+                                       'MISSION_REJECTED', 'WAITING_FOR_COMMAND']):
+                self._add_sys(friendly_status(raw))
+                self.chat_scroll = self.max_chat_scroll
 
-        # 채팅창에는 중요 이벤트만 시스템 메시지로 추가
-        if any(k in raw for k in ['MISSION_FINISHED', 'MISSION_STARTED',
-                                   'MISSION_REJECTED', 'WAITING_FOR_COMMAND']):
-            self._add_sys(friendly_status(raw))
+        # llm_node 응답 텍스트를 채팅창에 반영
+        while self.ros_node.pending_responses:
+            resp = self.ros_node.pending_responses.pop(0)
+            # 마지막 "처리 중" 메시지를 실제 응답으로 교체
+            for i in range(len(self.chat_log) - 1, -1, -1):
+                if self.chat_log[i][0] == self.BOT and 'GPT가 처리 중' in self.chat_log[i][1]:
+                    self.chat_log[i] = (self.BOT, resp, self.chat_log[i][2])
+                    break
+            else:
+                self._add_bot(resp)
             self.chat_scroll = self.max_chat_scroll
 
     def _send(self):
@@ -426,19 +445,10 @@ class LLMInterface:
         self._add_user(command)
         self.chat_scroll = self.max_chat_scroll
 
-        def _task():
-            try:
-                selected = self.ros_node.selector.select_target(command)
-                if selected:
-                    self.ros_node.publish_target(selected)
-                    self._add_bot(f'{selected} 선반으로 미션을 시작합니다.')
-                else:
-                    self._add_bot('목적지를 이해하지 못했습니다. 예: A-01, A-02, A-03, A-04')
-            except Exception as e:
-                self._add_bot(f'오류 발생: {e}')
-            self.chat_scroll = self.max_chat_scroll
-
-        threading.Thread(target=_task, daemon=True).start()
+        # llm_node로 자연어 전달 (응답은 response_callback으로 비동기 수신)
+        self.ros_node.publish_user_input(command)
+        self._add_bot('명령을 전송했습니다. GPT가 처리 중입니다...')
+        self.chat_scroll = self.max_chat_scroll
 
     def run(self):
         clock = pygame.time.Clock()
