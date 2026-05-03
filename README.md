@@ -1,213 +1,256 @@
-ROS 2 Humble, Gazebo Harmonic, PX4 SITL 환경에서 창고 월드 기반 드론 오프보드 미션을 실행하기 위한 패키지입니다.
-자연어 명령을 통해 드론이 창고 내 지정된 웨이포인트로 이동하고, Aruco 마커를 인식하며 정밀 착륙하는 시스템입니다.
-<br>
+# 🚁 LetgoBusan — 드론 기반 창고 자율 재고 관리 시스템
 
----
-<br>
-
-## Dependencies
-
-* __[Python](https://www.python.org/)__ 3.10.12
-* __[ROS 2 Humble](https://docs.ros.org/en/humble/)__ with __[cv_bridge](http://wiki.ros.org/cv_bridge)__, __[sensor_msgs](http://wiki.ros.org/sensor_msgs)__, __[std_msgs](http://wiki.ros.org/std_msgs)__, __[rclpy](http://wiki.ros.org/rclpy)__
-* __[Gazebo Harmonic](https://gazebosim.org/)__ 8.11.0 with __[ros_gz_bridge](https://github.com/gazebosim/ros_gz)__
-* __[PX4-Autopilot](https://github.com/PX4/PX4-Autopilot)__ with __[px4_msgs](https://github.com/PX4/px4_msgs)__
-* __[Micro-XRCE-DDS-Agent](https://github.com/eProsima/Micro-XRCE-DDS-Agent)__ (ROS 2 ↔ PX4 bridge)
-* __[QGroundControl](https://qgroundcontrol.com/)__ (지상 관제 소프트웨어)
-* __[NumPy](https://numpy.org/)__ 1.26.4 (2.0 미만 필수 — OpenCV 호환성)
-* __[OpenCV-Python](https://opencv.org/)__ 4.5.4 with __cv2.aruco__ (Aruco 마커 인식)
-* __[OpenAI Python SDK](https://github.com/openai/openai-python)__ 2.32.0 (자연어 명령 처리)
-* __[Pygame](https://www.pygame.org/)__ 2.6.1 (미션 UI)
+ROS2 + PX4 + Gazebo 기반의 드론 자율 비행 및 자연어 명령 재고 관리 시뮬레이션 프로젝트입니다.
 
 ---
 
-## External Dependencies
-이 저장소에는 아래 항목들이 포함되어 있지 않습니다. 별도로 설치해야 합니다.
-- PX4-Autopilot
-- px4_msgs (ros2 파일 쪽에 설치, Ex. capstone_ws)
-- QGroundControl (여기서는 Downloads 폴더에 다운받았음)
-- MicroXRCEAgent (별도 설치 필요)
-- OpenAI API Key (chat_mission_ui 실행 시 필요)
+## 📌 프로젝트 개요
 
-<br>
-
-아래의 터미널 명령문은 위의 내용을 기반으로 작성되었습니다.
-
-<br>
-
-또한 `px4vision_model.sdf` 파일을 아래 경로에 복사해야 합니다.
-~~~bash
-cp px4vision_model.sdf ~/PX4-Autopilot/Tools/simulation/gz/models/px4vision/model.sdf
-~~~
-이 파일에는 드론 하단에 Aruco 마커 인식용 하향 카메라(`down_camera_link`)가 추가되어 있습니다.
-
-<br><br>
+- 드론이 창고 선반을 자율 비행하며 QR코드로 재고를 스캔
+- 자연어 명령(GPT 연동)으로 미션 지시 가능
+- 다중 선반 순차 미션, 스캔 결과 분석 및 CSV 보고서 자동 저장
 
 ---
 
-## Build
-코드를 수정한 경우에는 다시 build 해야 합니다.
-~~~bash
-cd ~/capstone_ws
-colcon build --packages-select warehouse_offboard
-source install/setup.bash
-~~~
-처음 새로운 PC에서 workspace를 세팅할 때는 ROS 2 underlay를 먼저 source 하는 것이 좋습니다.
-~~~bash
-cd ~/capstone_ws
-source /opt/ros/humble/setup.bash
-colcon build --packages-select warehouse_offboard
-source install/setup.bash
-~~~
+## 🛠 기술 스택
+
+| 항목 | 내용 |
+|---|---|
+| OS | Ubuntu 22.04 |
+| ROS2 | Humble |
+| 시뮬레이터 | Gazebo (Harmonic) |
+| 드론 | PX4 SITL + px4vision |
+| 언어 | Python 3.10 |
+| LLM | OpenAI GPT-4o-mini |
+| QR 인식 | pyzbar |
 
 ---
-<br>
 
-## Before Running
-ROS 2 패키지를 실행하는 터미널에서는 항상 아래 명령을 먼저 실행합니다.
-~~~bash
-cd ~/capstone_ws
-source install/setup.bash
-~~~
+## 📁 프로젝트 구조
+
+```
+warehouse_offboard/
+├── warehouse_offboard/
+│   ├── goto_point.py            # 드론 미션 백엔드 (4층 스캔, 자율 비행)
+│   ├── inventory_vision_shelf.py # QR 기반 재고 인식 노드
+│   ├── chat_mission_ui.py        # 자연어 채팅 UI (pygame)
+│   ├── aruco_land.py             # ArUco 마커 정밀 착륙
+│   ├── gz_camera_bridge.py       # Gazebo 카메라 브릿지
+│   ├── llm_node.py               # GPT 자연어 미션 파싱
+│   ├── mission_sequencer.py      # 다중 타겟 순차 미션 관리
+│   ├── llm_scan_analyzer.py      # 스캔 결과 GPT 분석
+│   ├── inventory_reporter.py     # 재고 보고서 출력 및 CSV 저장
+│   ├── result_report_node.py     # 최종 GPT 종합 보고서
+│   ├── inv_counter_node.py       # 품목별 수량 카운팅
+│   ├── qr_detection_node.py      # QR 인식 노드
+│   └── llm_selector.py           # 규칙 기반 타겟 선택
+├── params/
+│   ├── goto_point.yaml           # 드론 미션 파라미터
+│   ├── inventory_db_shelf.yaml   # 재고 DB
+│   └── inventory_vision_shelf.yaml
+├── worlds/
+│   ├── warehouse.sdf             # Gazebo 창고 맵
+│   ├── inventory_qr_labels_unique/  # QR 라벨 PNG
+│   └── inventory_text_labels_unique/ # 텍스트 라벨 PNG
+└── setup.py
+```
 
 ---
-<br>
 
-## Run Sequence
-아래 순서대로 총 9개의 터미널을 사용합니다.
+## 🔄 전체 데이터 흐름
 
-<br><br>
+```
+[chat_mission_ui]
+    ↓ /llm/user_input
+[llm_node] ──→ /llm/response_text ──→ [chat_mission_ui 채팅창]
+    ↓ /llm/mission_command
+    ├──→ [mission_sequencer] ──→ /mission_target_name ──→ [goto_point] → 드론 비행
+    ├──→ [llm_scan_analyzer]
+    ├──→ [inventory_reporter]
+    └──→ [result_report_node]
+
+[inventory_vision_shelf] ──→ /inventory_scan_result
+    ↓
+[llm_scan_analyzer] ──→ /llm/scan_report ──→ [inventory_reporter] → CSV 저장
+                                          └──→ [result_report_node] → 최종 보고서
+```
+
+---
+
+## 🗺 창고 구역 정보
+
+| 구역 | 위치 | 선반 |
+|---|---|---|
+| A-01 | 우측 하단 | 4층 (L1~L4) |
+| A-02 | 좌측 하단 | 4층 (L1~L4) |
+| A-03 | 우측 상단 | 4층 (L1~L4) |
+| A-04 | 좌측 상단 | 4층 (L1~L4) |
+
+---
+
+## ⚙️ 드론 미션 파이프라인
+
+```
+WAIT_HOME → TAKEOFF → YAW_ALIGN → MOVE_GLOBAL_Y → MOVE_GLOBAL_X
+→ SCAN_LAYER (L1 → L2 → L3 → L4)
+→ RETURN_GLOBAL_X → RETURN_GLOBAL_Y → PRELAND_YAW_HOME
+→ PRELAND_SETTLE → WAIT_ARUCO_LAND → FINISHED
+```
+
+---
+
+## 🚀 실행 방법
+
+### 사전 준비
+
+```bash
+# 환경 정리
+pkill -9 -f px4
+pkill -9 -f "gz sim"
+pkill -9 -f MicroXRCEAgent
+pkill -9 -f ros_gz_bridge
+rm -rf /tmp/px4* ~/.ros/log ~/.gz/rendering ~/.cache/gazebo
+
+# OpenAI API 키 설정
+export OPENAI_API_KEY=your_api_key_here
+```
 
 ### Terminal 1: Gazebo
-~~~bash
-cd ~/capstone_ws/src/warehouse_offboard
-source ~/.bashrc
-export GZ_SIM_RESOURCE_PATH=~/PX4-Autopilot/Tools/simulation/gz/models:~/PX4-Autopilot/Tools/simulation/gz/worlds
+```bash
+cd ~/capstone_ws
+source /opt/ros/humble/setup.bash && source install/setup.bash
+export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:$HOME/capstone_ws/src/warehouse_offboard/models
+export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:$HOME/PX4-Autopilot/Tools/simulation/gz/models
+export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:$HOME/PX4-Autopilot/Tools/simulation/gz/worlds
 gz sim -r ~/capstone_ws/src/warehouse_offboard/worlds/warehouse.sdf
-~~~
+```
 
-<br><br>
+### Terminal 2: PX4
+```bash
+cd ~/PX4-Autopilot && source ~/.bashrc
+PX4_GZ_STANDALONE=1 PX4_SYS_AUTOSTART=4006 \
+PX4_SIM_MODEL=gz_px4vision \
+PX4_GZ_MODEL_POSE="2.1,-1.5,0.3,0,0,0" \
+./build/px4_sitl_default/bin/px4
+```
 
-### Terminal 2: PX4 (Terminal 1 완전히 뜬 후 실행)
-~~~bash
-cd ~/PX4-Autopilot
-source ~/.bashrc
-PX4_GZ_STANDALONE=1 PX4_SYS_AUTOSTART=4006 PX4_SIM_MODEL=gz_px4vision PX4_GZ_MODEL_POSE="2.1,-1.5,0.3,0,0,0" ./build/px4_sitl_default/bin/px4
-~~~
-
-<br><br>
-
-### Terminal 3: MicroXRCEAgent (ROS ↔ PX4 bridge)
-~~~bash
+### Terminal 3: MicroXRCEAgent
+```bash
 MicroXRCEAgent udp4 -p 8888
-~~~
-
-<br><br>
+```
 
 ### Terminal 4: QGroundControl
-~~~bash
-cd ~/Downloads
-./QGroundControl.AppImage
-~~~
+```bash
+cd ~/Downloads && ./QGroundControl.AppImage
+```
 
-<br><br>
-
-### Terminal 5: goto_point (드론 미션 백엔드)
-~~~bash
+### Terminal 5: Gazebo 카메라 bridge
+```bash
 cd ~/capstone_ws
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-ros2 run warehouse_offboard goto_point --ros-args --params-file ~/capstone_ws/src/warehouse_offboard/params/goto_point.yaml
-~~~
-
-<br><br>
-
-### Terminal 6: chat_mission_ui (자연어 명령 UI)
-~~~bash
-export OPENAI_API_KEY="your_api_key"
-cd ~/capstone_ws
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-ros2 run warehouse_offboard chat_mission_ui
-~~~
-
-<br><br>
-
-### Terminal 7: gz_camera_bridge (Gazebo ↔ ROS2 카메라 브릿지)
-~~~bash
-cd ~/capstone_ws
-source /opt/ros/humble/setup.bash
-source install/setup.bash
+source /opt/ros/humble/setup.bash && source install/setup.bash
 ros2 run warehouse_offboard gz_camera_bridge
-~~~
+```
 
-<br><br>
+### Terminal 6: 재고 인식 노드
+```bash
+cd ~/capstone_ws
+source /opt/ros/humble/setup.bash && source install/setup.bash
+ros2 run warehouse_offboard inventory_vision_shelf \
+  --ros-args \
+  --params-file $HOME/capstone_ws/src/warehouse_offboard/params/inventory_vision_shelf.yaml \
+  -p image_topic:=/camera/image_raw \
+  -p inventory_db_path:=$HOME/capstone_ws/src/warehouse_offboard/params/inventory_db_shelf.yaml \
+  -p require_target_match:=false
+```
 
-### Terminal 8: rqt_image_view (카메라 영상 확인)
-~~~bash
+### Terminal 7: goto_point (드론 미션 백엔드)
+```bash
+cd ~/capstone_ws
+source /opt/ros/humble/setup.bash && source install/setup.bash
+ros2 run warehouse_offboard goto_point \
+  --ros-args --params-file ~/capstone_ws/src/warehouse_offboard/params/goto_point.yaml
+```
+
+### Terminal 8: aruco_land (정밀 착륙)
+```bash
+cd ~/capstone_ws
+source /opt/ros/humble/setup.bash && source install/setup.bash
+ros2 run warehouse_offboard aruco_land \
+  --ros-args --params-file ~/capstone_ws/src/warehouse_offboard/params/goto_point.yaml
+```
+
+### Terminal 9: llm_node (GPT 미션 파싱)
+```bash
+cd ~/capstone_ws
+source /opt/ros/humble/setup.bash && source install/setup.bash
+export OPENAI_API_KEY=your_api_key_here
+ros2 run warehouse_offboard llm_node
+```
+
+### Terminal 10: mission_sequencer (순차 미션)
+```bash
+cd ~/capstone_ws
+source /opt/ros/humble/setup.bash && source install/setup.bash
+ros2 run warehouse_offboard mission_sequencer
+```
+
+### Terminal 11: llm_scan_analyzer (스캔 결과 분석)
+```bash
+cd ~/capstone_ws
+source /opt/ros/humble/setup.bash && source install/setup.bash
+export OPENAI_API_KEY=your_api_key_here
+ros2 run warehouse_offboard llm_scan_analyzer
+```
+
+### Terminal 12: inventory_reporter (보고서 저장)
+```bash
+cd ~/capstone_ws
+source /opt/ros/humble/setup.bash && source install/setup.bash
+ros2 run warehouse_offboard inventory_reporter
+```
+
+### Terminal 13: chat_mission_ui (자연어 명령 UI)
+```bash
+cd ~/capstone_ws
+source /opt/ros/humble/setup.bash && source install/setup.bash
+ros2 run warehouse_offboard chat_mission_ui
+```
+
+### Terminal 14: rqt_image_view (카메라 디버그)
+```bash
 source /opt/ros/humble/setup.bash
 ros2 run rqt_image_view rqt_image_view
-~~~
-뜨면 드롭다운에서 `/aruco_land/debug_image` 선택
-
-<br><br>
-
-### Terminal 9: aruco_land (Aruco 마커 기반 정밀 착륙)
-~~~bash
-cd ~/capstone_ws
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-ros2 run warehouse_offboard aruco_land --ros-args --params-file ~/capstone_ws/src/warehouse_offboard/params/goto_point.yaml
-~~~
-
-<br><br>
+```
 
 ---
 
-## Waypoints
-| 이름 | 랙 위치 (world) | 통로 위치 (world) |
-|------|----------------|------------------|
-| A-01 | (0.5, -1.7)    | (0.5, -0.8)      |
-| A-02 | (-1.7, -1.7)   | (-1.7, -0.8)     |
-| A-03 | (0.5, 0.7)     | (0.5, 1.4)       |
-| A-04 | (-1.7, 0.7)    | (-1.7, 1.4)      |
+## 💬 자연어 명령 예시
 
-- 이륙/착륙 지점: (2.1, -1.5), 고도: 1.8m
-- Aruco 마커 (ID=0): 이착륙 패드 중앙 배치
-
-<br>
+| 입력 | 동작 |
+|---|---|
+| `A-01 가줘` | A-01 선반 재고 스캔 |
+| `전체 창고 재고 조사해줘` | A-01 ~ A-04 순차 스캔 |
+| `우측 선반만 확인해줘` | A-01, A-03 순차 스캔 |
+| `2번 구역 가봐` | A-02로 이동 |
 
 ---
 
-## System Architecture
-~~~
-[chat_mission_ui] ── /mission_target_name ──▶ [goto_point] ──▶ PX4 (offboard)
-      │                                             │
-  LLM/규칙 기반                             /mission_status_text
-  (llm_selector)                                   │
-                                            ◀──────┘
-[aruco_land] ◀── /mission_status_text (PRELAND_SETTLE)
-      │
-  하단 카메라 → Aruco 마커 인식 → 정밀 착륙
-      │
-  /aruco_land/status (ARUCO_LAND_DONE) ──▶ [goto_point]
+## 📊 주요 ROS2 토픽
 
-[gz_camera_bridge] ──▶ /camera/image_raw
-                   ──▶ /camera/down_image_raw ──▶ rqt_image_view
-~~~
-
-<br>
+| 토픽 | 발행자 | 구독자 | 내용 |
+|---|---|---|---|
+| `/llm/user_input` | chat_mission_ui | llm_node | 자연어 입력 |
+| `/llm/mission_command` | llm_node | mission_sequencer, llm_scan_analyzer | GPT 파싱 결과 |
+| `/llm/response_text` | llm_node | chat_mission_ui | GPT 응답 텍스트 |
+| `/mission_target_name` | mission_sequencer | goto_point | 드론 타겟 |
+| `/mission_status_text` | goto_point | 전체 | 미션 상태 |
+| `/inventory_scan_result` | inventory_vision_shelf | llm_scan_analyzer | QR 스캔 결과 |
+| `/llm/scan_report` | llm_scan_analyzer | inventory_reporter | 분석 결과 |
+| `/llm/final_report` | result_report_node | - | 최종 보고서 |
 
 ---
 
-## Notes
-- 코드를 수정한 뒤에는 반드시 다시 build 해야 합니다.
-- `goto_point.yaml` 파일에서 waypoint 및 aruco_land 관련 파라미터를 수정할 수 있습니다.
-- QGroundControl AppImage 위치가 다르면 경로를 맞게 수정해야 합니다.
-- PX4 경로가 `~/PX4-Autopilot`이 아닐 경우 해당 경로로 수정해야 합니다.
-- `llm_selector.py`는 `OPENAI_API_KEY` 환경변수를 사용합니다. Terminal 6 실행 전 반드시 설정해야 합니다.
-- ROS_DOMAIN_ID가 팀원과 겹치지 않도록 설정하세요.
-예시:
-~~~bash
-echo "export ROS_DOMAIN_ID=0" >> ~/.bashrc
-source ~/.bashrc
-~~~
+## 👥 팀원
+
+- **재고 인식 / 드론 미션 / Chat UI**: iasl
+- **LLM 연동 / 보고서 생성**: jihopark02
