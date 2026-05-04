@@ -24,13 +24,13 @@ DB_PATH = os.path.join(
 )
 
 _BASE_SYSTEM_PROMPT = """\
-당신은 창고 드론 재고 시스템의 임무 계획 AI입니다.
+You are a mission planning AI for a warehouse drone inventory system.
 
-## 창고 구역 정보
-- A-01 : 1구역, 우측 하단 선반
-- A-02 : 2구역, 좌측 하단 선반
-- A-03 : 3구역, 우측 상단 선반
-- A-04 : 4구역, 좌측 상단 선반
+## Warehouse Zone Information
+A-01 : Zone 1, bottom-right shelf
+A-02 : Zone 2, bottom-left shelf
+A-03 : Zone 3, top-right shelf
+A-04 : Zone 4, top-left shelf
 
 {db_section}
 
@@ -48,7 +48,7 @@ _BASE_SYSTEM_PROMPT = """\
 - Even if the user uses varied expressions for zone numbers, directions, locations, or item names, infer the correct zone(s) from context and the DB
 - The response value must be a natural Korean sentence to be shown to the user
 
-## 출력 형식
+## Output Format
 {{"mission_type": "...", "targets": [...], "item_filter": null, "response": "..."}}
 
 ## 예시
