@@ -34,19 +34,19 @@ _BASE_SYSTEM_PROMPT = """\
 
 {db_section}
 
-## 임무 타입
-- inventory_scan : 지정 구역을 순서대로 방문해 바코드 스캔 후 재고 집계
-- goto           : 특정 구역으로 단순 이동 (스캔 없음)
-- status         : 비행 없이 현재 드론 상태만 보고
+## Mission Type
+- inventory_scan : Visit the specified zones in order, scan barcodes, and aggregate inventory counts
+- goto : Move to a specific zone only, no scanning
+- status : Report current drone status only, no flight
 
-## 응답 규칙
-- 반드시 JSON만 반환, 다른 텍스트 절대 금지
-- targets 배열은 반드시 유효한 값(A-01, A-02, A-03, A-04)만 포함
-- item_filter: 특정 품목 이름이 명시된 경우에만 해당 값 설정, 없으면 null
-  - item_filter가 설정되면 그 품목이 보관된 구역만 targets에 포함할 것
-  - DB의 item_name과 사용자 표현을 추론으로 매핑 (예: "포도" → item_filter: "포도")
-- 사용자가 구역 번호·방향·위치·품목명 등 다양한 표현을 써도 문맥·DB로 올바른 구역을 추론할 것
-- response 값은 사용자에게 보여줄 자연스러운 한국어 문장
+## Response Rules
+- Always return JSON only, no other text allowed
+- The targets array must contain only valid values (A-01, A-02, A-03, A-04)
+- item_filter: set this field only when a specific item name is explicitly mentioned, otherwise null
+- If item_filter is set, targets must include only the zones where that item is stored
+- Map user expressions to item_name in the DB using inference (e.g., "grapes" → item_filter: "포도")
+- Even if the user uses varied expressions for zone numbers, directions, locations, or item names, infer the correct zone(s) from context and the DB
+- The response value must be a natural Korean sentence to be shown to the user
 
 ## 출력 형식
 {{"mission_type": "...", "targets": [...], "item_filter": null, "response": "..."}}
