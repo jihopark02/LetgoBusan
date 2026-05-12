@@ -1,10 +1,10 @@
-# 🚁 LetgoBusan — 드론 기반 창고 자율 재고 관리 시스템
+# 드론 기반 창고 자율 재고 관리 시스템
 
 ROS2 + PX4 + Gazebo 기반의 드론 자율 비행 및 자연어 명령 재고 관리 시뮬레이션 프로젝트입니다.
 
 ---
 
-## 📌 프로젝트 개요
+## 프로젝트 개요
 
 - 드론이 창고 선반을 자율 비행하며 QR코드로 재고를 스캔
 - 자연어 명령(GPT 연동)으로 미션 지시 가능
@@ -12,7 +12,7 @@ ROS2 + PX4 + Gazebo 기반의 드론 자율 비행 및 자연어 명령 재고 �
 
 ---
 
-## 🛠 기술 스택
+## 기술 스택
 
 | 항목 | 내용 |
 |---|---|
@@ -26,7 +26,7 @@ ROS2 + PX4 + Gazebo 기반의 드론 자율 비행 및 자연어 명령 재고 �
 
 ---
 
-## 📁 프로젝트 구조
+## 프로젝트 구조
 
 ```
 warehouse_offboard/
@@ -57,7 +57,7 @@ warehouse_offboard/
 
 ---
 
-## 🔄 전체 데이터 흐름
+## 전체 데이터 흐름
 
 ```
 [chat_mission_ui]
@@ -88,7 +88,7 @@ warehouse_offboard/
 
 ---
 
-## ⚙️ 드론 미션 파이프라인
+## 드론 미션 파이프라인
 
 ```
 WAIT_HOME → TAKEOFF → YAW_ALIGN → MOVE_GLOBAL_Y → MOVE_GLOBAL_X
@@ -99,7 +99,7 @@ WAIT_HOME → TAKEOFF → YAW_ALIGN → MOVE_GLOBAL_Y → MOVE_GLOBAL_X
 
 ---
 
-## 🚀 실행 방법
+## 실행 방법
 
 ### 사전 준비
 
@@ -224,7 +224,7 @@ ros2 run rqt_image_view rqt_image_view
 
 ---
 
-## 💬 자연어 명령 예시
+## 자연어 명령 예시
 
 | 입력 | 동작 |
 |---|---|
@@ -235,7 +235,7 @@ ros2 run rqt_image_view rqt_image_view
 
 ---
 
-## 📊 주요 ROS2 토픽
+## 주요 ROS2 토픽
 
 | 토픽 | 발행자 | 구독자 | 내용 |
 |---|---|---|---|
@@ -248,9 +248,4 @@ ros2 run rqt_image_view rqt_image_view
 | `/llm/scan_report` | llm_scan_analyzer | inventory_reporter | 분석 결과 |
 | `/llm/final_report` | result_report_node | - | 최종 보고서 |
 
----
 
-## 👥 팀원
-
-- **재고 인식 / 드론 미션 / Chat UI**: iasl
-- **LLM 연동 / 보고서 생성**: jihopark02
