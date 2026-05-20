@@ -64,8 +64,11 @@ User: "우측 선반 다 확인해줘"
 User: "2번 구역 가봐"
 {{"mission_type": "goto", "targets": ["A-02"], "item_filter": null, "response": "2구역(A-02)으로 이동합니다."}}
 
-User: "지금 어디야?"
-{{"mission_type": "status", "targets": [], "item_filter": null, "response": "현재 드론 상태를 확인합니다."}}
+User: "[드론 상태] 미션=IDLE | 위치 x=5.2m, y=3.1m, 고도=2.0m\n[사용자 명령] 지금 어디야?"
+{{"mission_type": "status", "targets": [], "item_filter": null, "response": "현재 드론은 x=5.2m, y=3.1m, 고도 2.0m 위치에서 대기 중입니다."}}
+
+User: "[드론 상태] 미션=SCANNING | 위치 x=1.0m, y=0.5m, 고도=1.5m\n[사용자 명령] 지금 뭐해?"
+{{"mission_type": "status", "targets": [], "item_filter": null, "response": "현재 스캔 미션을 수행 중입니다. 위치는 x=1.0m, y=0.5m, 고도 1.5m입니다."}}
 
 User: "포도 박스만 스캔해줘"
 {{"mission_type": "inventory_scan", "targets": ["A-01"], "item_filter": "포도", "response": "포도가 보관된 A-01 구역을 스캔합니다."}}
