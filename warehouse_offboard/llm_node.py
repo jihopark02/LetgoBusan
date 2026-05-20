@@ -124,6 +124,7 @@ class LLMNode(Node):
         self._mission_status = 'IDLE'
         self._pos = {'x': 0.0, 'y': 0.0, 'z': 0.0}
         self._history: list[dict] = []
+        self._last_report: str = ''
 
         px4_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -135,6 +136,7 @@ class LLMNode(Node):
         self.create_subscription(String, '/mission_status_text', self._status_cb, 10)
         self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position_v1', self._pos_cb, px4_qos)
         self.create_subscription(String, '/llm/user_input', self._user_input_cb, 10)
+        self.create_subscription(String, '/llm/final_report', self._report_cb, 10)
 
         self._cmd_pub = self.create_publisher(String, '/llm/mission_command', 10)
         self._resp_pub = self.create_publisher(String, '/llm/response_text', 10)
@@ -158,11 +160,16 @@ class LLMNode(Node):
         self.get_logger().info(f'사용자 입력 수신: "{user_text}"')
         threading.Thread(target=self._call_llm, args=(user_text,), daemon=True).start()
 
+    def _report_cb(self, msg: String):
+        self._last_report = msg.data
+
     def _build_user_message(self, user_text: str) -> str:
+        report_section = f"[최근 스캔 보고서] {self._last_report}\n" if self._last_report else ''
         return (
             f"[드론 상태] 미션={self._mission_status} | "
             f"위치 x={self._pos['x']:.1f}m, y={self._pos['y']:.1f}m, "
             f"고도={self._pos['z']:.1f}m\n"
+            f"{report_section}"
             f"[사용자 명령] {user_text}"
         )
 
@@ -179,7 +186,6 @@ class LLMNode(Node):
             resp = self._client.chat.completions.create(
                 model='gpt-5-mini',
                 messages=messages,
-                temperature=0.0,
                 response_format={'type': 'json_object'},
             )
 
