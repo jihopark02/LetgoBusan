@@ -123,6 +123,7 @@ class LLMNode(Node):
         # ── 드론 상태 ─────────────────────────────────────────────────────
         self._mission_status = 'IDLE'
         self._pos = {'x': 0.0, 'y': 0.0, 'z': 0.0}
+        self._history: list[dict] = []
 
         px4_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -172,12 +173,12 @@ class LLMNode(Node):
 
         raw = ''
         try:
+            user_msg = {'role': 'user', 'content': self._build_user_message(user_text)}
+            messages = [{'role': 'system', 'content': self._system_prompt}] + self._history + [user_msg]
+
             resp = self._client.chat.completions.create(
                 model='gpt-5-mini',
-                messages=[
-                    {'role': 'system', 'content': self._system_prompt},
-                    {'role': 'user', 'content': self._build_user_message(user_text)},
-                ],
+                messages=messages,
                 temperature=0.0,
                 response_format={'type': 'json_object'},
             )
@@ -205,6 +206,10 @@ class LLMNode(Node):
                 'response': response_text,
             }
             output_str = json.dumps(output, ensure_ascii=False)
+
+            self._history.append(user_msg)
+            self._history.append({'role': 'assistant', 'content': raw})
+            self._history = self._history[-10:]  # 최근 5턴 유지
 
             self.get_logger().info(f'LLM 출력 → /llm/mission_command: {output_str}')
             self._cmd_pub.publish(String(data=output_str))
