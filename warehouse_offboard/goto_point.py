@@ -113,6 +113,7 @@ class GotoPoint(Node):
         self.declare_parameter('spawn_world_x', -10.0)
         self.declare_parameter('spawn_world_y', 0.0)
         self.declare_parameter('yaw_align_deg', 90.0)
+        self.declare_parameter('safe_transit_z', -2.5)
 
         self.declare_parameter('waypoint_names', ['A-01', 'A-02', 'A-03', 'A-04'])
         self.declare_parameter('waypoint_world_x', [0.0, 0.0, 0.0, 0.0])
@@ -138,6 +139,7 @@ class GotoPoint(Node):
         self.spawn_world_x = float(self.get_parameter('spawn_world_x').value)
         self.spawn_world_y = float(self.get_parameter('spawn_world_y').value)
         self.yaw_align_deg = float(self.get_parameter('yaw_align_deg').value)
+        self.safe_transit_z = float(self.get_parameter('safe_transit_z').value)
 
         self.default_target_name = str(self.get_parameter('target_name').value)
 
@@ -347,22 +349,19 @@ class GotoPoint(Node):
                 'z': self.current_z, 'yaw': self.current_heading,
             }
 
+        # 항상 최초 이착륙 지점을 기준으로 사용 (드리프트 누적 방지)
+        self.home_x = self._launch_home['x']
+        self.home_y = self._launch_home['y']
+        self.home_z = self._launch_home['z']
+        self.home_yaw = self._launch_home['yaw']
+        self.home_initialized = True
+
         if self._from_interrupt:
-            # 공중 인터럽트: 원래 이착륙 지점 복원, TAKEOFF 스킵, warmup 스킵
-            self.home_x = self._launch_home['x']
-            self.home_y = self._launch_home['y']
-            self.home_z = self._launch_home['z']
-            self.home_yaw = self._launch_home['yaw']
-            self.home_initialized = True
-            start_phase = 'MOVE_GLOBAL_Y'
+            # 공중 인터럽트: 안전 고도로 상승 후 타겟으로 이동
+            start_phase = 'ASCEND_SAFE'
             start_counter = 11
             self._from_interrupt = False
         else:
-            self.home_x = self.current_x
-            self.home_y = self.current_y
-            self.home_z = self.current_z
-            self.home_yaw = self.current_heading
-            self.home_initialized = True
             start_phase = 'TAKEOFF'
             start_counter = 0
 
@@ -544,6 +543,12 @@ class GotoPoint(Node):
         if self.phase == 'YAW_ALIGN':
             return [self.home_x, self.home_y, self.scan_layer_z[0], self.aligned_yaw()]
 
+        if self.phase == 'ASCEND_SAFE':
+            return [self.current_x, self.current_y, self.safe_transit_z, self.aligned_yaw()]
+
+        if self.phase == 'MOVE_SAFE':
+            return [self.target_local_x, self.target_local_y, self.safe_transit_z, self.aligned_yaw()]
+
         if self.phase == 'MOVE_GLOBAL_Y':
             return [self.target_local_x, self.home_y, self.scan_layer_z[0], self.aligned_yaw()]
 
@@ -650,7 +655,19 @@ class GotoPoint(Node):
                     f'dist={distance:.2f}'
                 )
 
-        if self.phase == 'TAKEOFF':
+        if self.phase == 'ASCEND_SAFE':
+            if self.reached_z(self.safe_transit_z):
+                self.phase = 'MOVE_SAFE'
+
+        elif self.phase == 'MOVE_SAFE':
+            if self.reached_x(self.target_local_x) and self.reached_y(self.target_local_y):
+                self.phase = 'SCAN_LAYER'
+                self.scan_index = 0
+                self.scan_hover_counter = 0
+                self.scan_wait_counter = 0
+                self.publish_mission_status(f'SCAN_START:{self.target_name}')
+
+        elif self.phase == 'TAKEOFF':
             if self.reached_z(self.scan_layer_z[0]):
                 self.phase = 'YAW_ALIGN'
 

@@ -9,6 +9,7 @@ goto_point:
     spawn_world_x: 2.1
     spawn_world_y: -1.5
     yaw_align_deg: 90.0
+    safe_transit_z: -2.5
 
     xy_speed_mps: 1.0
     z_up_speed_mps: 0.5
