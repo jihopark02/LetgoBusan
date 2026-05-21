@@ -674,7 +674,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_04_L1.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_04_L1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -700,7 +700,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_04_L1.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_04_L1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -727,7 +727,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_04_L2.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_04_L2.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -753,7 +753,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_04_L2.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_04_L2.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -780,7 +780,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_04_L3.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_04_L3.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -806,7 +806,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_04_L3.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_04_L3.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -833,7 +833,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_04_L4.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_04_L4.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -859,7 +859,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_04_L4.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_04_L4.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -886,7 +886,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_03_L1.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_03_L1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -912,7 +912,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_03_L1.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_03_L1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -939,7 +939,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_03_L2.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_03_L2.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -965,7 +965,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_03_L2.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_03_L2.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -992,7 +992,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_03_L3.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_03_L3.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1018,7 +1018,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_03_L3.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_03_L3.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1045,7 +1045,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_03_L4.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_03_L4.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1071,7 +1071,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_03_L4.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_03_L4.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1098,7 +1098,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_02_L1.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_02_L1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1124,7 +1124,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_02_L1.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_02_L1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1151,7 +1151,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_02_L2.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_02_L2.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1177,7 +1177,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_02_L2.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_02_L2.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1204,7 +1204,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_02_L3.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_02_L3.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1230,7 +1230,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_02_L3.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_02_L3.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1257,7 +1257,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_02_L4.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_02_L4.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1283,7 +1283,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_02_L4.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_02_L4.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1310,7 +1310,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_01_L1.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_01_L1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1336,7 +1336,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_01_L1.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_01_L1.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1363,7 +1363,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_01_L2.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_01_L2.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1389,7 +1389,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_01_L2.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_01_L2.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1416,7 +1416,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_01_L3.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_01_L3.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1442,7 +1442,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_01_L3.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_01_L3.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1469,7 +1469,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_01_L4.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_qr_labels_unique/QR_ONLY_A_01_L4.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1495,7 +1495,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_01_L4.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/inventory_text_labels_unique/TEXT_ONLY_A_01_L4.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -1529,7 +1529,7 @@
             <diffuse>1 1 1 1</diffuse>
             <pbr>
               <metal>
-                <albedo_map>file:///home/iasl/capstone_ws/src/warehouse_offboard/worlds/aruco_marker_0.png</albedo_map>
+                <albedo_map>file:///home/jiho/capstone_ws/src/warehouse_offboard/worlds/aruco_marker_0.png</albedo_map>
               </metal>
             </pbr>
           </material>

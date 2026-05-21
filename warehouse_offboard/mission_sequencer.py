@@ -11,10 +11,12 @@ class MissionSequencer(Node):
 
         self._queue = []
         self._active = None
+        self._pending_queue = []
 
         self.create_subscription(String, '/llm/mission_command', self._cmd_cb, 10)
         self.create_subscription(String, '/mission_status_text', self._status_cb, 10)
         self._target_pub = self.create_publisher(String, '/mission_target_name', 10)
+        self._cancel_pub = self.create_publisher(String, '/mission_cancel', 10)
 
         self.get_logger().info('mission_sequencer 시작 — /llm/mission_command 대기 중')
 
@@ -32,10 +34,15 @@ class MissionSequencer(Node):
             self.get_logger().info(f'비행 없는 미션 타입: {mission_type}')
             return
 
-        self._queue = list(targets)
-        self._active = None
-        self.get_logger().info(f'미션 큐 등록: {self._queue}')
-        self._send_next()
+        if self._active is not None:
+            # 비행 중 → 인터럽트: _active 유지 (MISSION_FINISHED 감지용)
+            self._pending_queue = list(targets)
+            self._cancel_pub.publish(String(data='cancel'))
+            self.get_logger().info(f'미션 인터럽트 요청: 현재={self._active}, 대기={self._pending_queue}')
+        else:
+            self._queue = list(targets)
+            self.get_logger().info(f'미션 큐 등록: {self._queue}')
+            self._send_next()
 
     def _status_cb(self, msg: String):
         status = msg.data
@@ -45,6 +52,10 @@ class MissionSequencer(Node):
         if finished == self._active:
             self.get_logger().info(f'완료 확인: {finished} — 다음 타겟으로')
             self._active = None
+            if self._pending_queue:
+                self._queue = self._pending_queue
+                self._pending_queue = []
+                self.get_logger().info(f'인터럽트 큐 처리: {self._queue}')
             self._send_next()
 
     def _send_next(self):

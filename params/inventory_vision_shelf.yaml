@@ -6,7 +6,7 @@ inventory_vision_shelf:
     mission_target_topic: "/mission_target_name"
     result_topic: "/inventory_scan_result"
     debug_image_topic: "/inventory_debug_image"
-    inventory_db_path: "/home/iasl/capstone_ws/src/warehouse_offboard/params/inventory_db_shelf.yaml"
+    inventory_db_path: "/home/jiho/capstone_ws/src/warehouse_offboard/params/inventory_db_shelf.yaml"
 
     scan_every_n_frames: 3
     duplicate_cooldown_sec: 3.0

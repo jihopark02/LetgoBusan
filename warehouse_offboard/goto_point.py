@@ -102,6 +102,7 @@ class GotoPoint(Node):
             self.aruco_land_status_callback,
             10
         )
+        self.create_subscription(String, '/mission_cancel', self._cancel_cb, 10)
 
         # ---------- parameters ----------
         self.declare_parameter('reach_tolerance', 0.30)
@@ -225,6 +226,9 @@ class GotoPoint(Node):
         # WAIT_ARUCO_LAND 타임아웃 카운터
         self.aruco_land_wait_counter = 0
 
+        self._launch_home: dict | None = None
+        self._from_interrupt: bool = False
+
         self.timer = self.create_timer(0.1, self.timer_callback)
 
         self.get_logger().info('goto_point node started [4-LAYER INVENTORY SCAN MODE]')
@@ -244,6 +248,17 @@ class GotoPoint(Node):
         if msg.data == 'ARUCO_LAND_DONE':
             self.get_logger().info('aruco_land 정밀 착륙 완료 신호 수신')
             self.aruco_land_done = True
+
+    def _cancel_cb(self, msg: String):
+        if self.phase in ['WAIT_HOME', 'FINISHED', 'INTERRUPT_HOVER']:
+            return
+        self._from_interrupt = not self.landed
+        self.publish_mission_status(f'MISSION_FINISHED:{self.target_name}')
+        self.phase = 'INTERRUPT_HOVER'
+        self.get_logger().info(
+            f'미션 인터럽트: {self.target_name} → INTERRUPT_HOVER '
+            f'(공중={self._from_interrupt})'
+        )
 
     def inventory_result_callback(self, msg: String):
         try:
@@ -286,8 +301,8 @@ class GotoPoint(Node):
             self.publish_mission_status('MISSION_REJECTED:UNKNOWN_TARGET')
             return
 
-        # WAIT_HOME 또는 FINISHED 상태에서만 새 미션 수락
-        if self.phase not in ['WAIT_HOME', 'FINISHED']:
+        # WAIT_HOME, FINISHED, INTERRUPT_HOVER 상태에서만 새 미션 수락
+        if self.phase not in ['WAIT_HOME', 'FINISHED', 'INTERRUPT_HOVER']:
             self.get_logger().warn(
                 f'Received {target_name}, but mission is already running (phase={self.phase})'
             )
@@ -325,12 +340,31 @@ class GotoPoint(Node):
             self.publish_mission_status('MISSION_REJECTED:POSITION_INVALID')
             return
 
-        # 홈 포지션 갱신: 매 미션마다 현재 위치를 홈으로 새로 설정
-        self.home_x = self.current_x
-        self.home_y = self.current_y
-        self.home_z = self.current_z
-        self.home_yaw = self.current_heading
-        self.home_initialized = True
+        # 최초 미션 시 이착륙 지점 저장 (이후 변경 안 함)
+        if self._launch_home is None:
+            self._launch_home = {
+                'x': self.current_x, 'y': self.current_y,
+                'z': self.current_z, 'yaw': self.current_heading,
+            }
+
+        if self._from_interrupt:
+            # 공중 인터럽트: 원래 이착륙 지점 복원, TAKEOFF 스킵, warmup 스킵
+            self.home_x = self._launch_home['x']
+            self.home_y = self._launch_home['y']
+            self.home_z = self._launch_home['z']
+            self.home_yaw = self._launch_home['yaw']
+            self.home_initialized = True
+            start_phase = 'MOVE_GLOBAL_Y'
+            start_counter = 11
+            self._from_interrupt = False
+        else:
+            self.home_x = self.current_x
+            self.home_y = self.current_y
+            self.home_z = self.current_z
+            self.home_yaw = self.current_heading
+            self.home_initialized = True
+            start_phase = 'TAKEOFF'
+            start_counter = 0
 
         self.target_name = selected_target_name
         self.target_world = self.waypoint_map[self.target_name]
@@ -341,9 +375,9 @@ class GotoPoint(Node):
         self.target_local_z = self.scan_layer_z[0]
 
         # ── 상태 완전 초기화 ──
-        self.phase = 'TAKEOFF'
+        self.phase = start_phase
         self.prev_phase = ''
-        self.offboard_setpoint_counter = 0   # offboard/arm 재진입을 위해 반드시 0으로
+        self.offboard_setpoint_counter = start_counter
         self.hover_counter = 0
         self.preland_hover_counter = 0
         self.land_command_sent = False
@@ -494,6 +528,9 @@ class GotoPoint(Node):
     # phase target
     # ------------------------------------------------------------------
     def get_phase_target(self) -> Optional[List[float]]:
+        if self.phase == 'INTERRUPT_HOVER':
+            return [self.current_x, self.current_y, self.current_z, self.current_heading]
+
         if (
             self.home_x is None or self.home_y is None or self.home_z is None or
             self.home_yaw is None or
@@ -551,6 +588,20 @@ class GotoPoint(Node):
                 selected = self.pending_target_name
                 self.pending_target_name = None
                 self.get_logger().info(f'FINISHED 상태에서 새 미션 수신: {selected} → 미션 재시작')
+                self.start_new_mission(selected)
+            return
+
+        if self.phase == 'INTERRUPT_HOVER':
+            # offboard 유지하며 현재 위치 고정, 새 타겟 대기
+            self.publish_offboard_control_mode()
+            target_pose = self.get_phase_target()
+            if target_pose is not None:
+                self.publish_trajectory_setpoint(
+                    target_pose[0], target_pose[1], target_pose[2], target_pose[3]
+                )
+            if self.pending_target_name is not None:
+                selected = self.pending_target_name
+                self.pending_target_name = None
                 self.start_new_mission(selected)
             return
 
