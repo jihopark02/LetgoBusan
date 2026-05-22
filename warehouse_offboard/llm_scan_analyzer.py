@@ -52,7 +52,6 @@ class LLMScanAnalyzer(Node):
         self._item_filter: list[str] | None = None
 
         self.create_subscription(String, '/llm/mission_command',   self._mission_cmd_cb,  10)
-        self.create_subscription(String, '/qr/scan_result',        self._scan_cb,         10)
         self.create_subscription(String, '/inventory_scan_result', self._vision_scan_cb,  10)
         self._pub_analysis = self.create_publisher(String, '/llm/scan_analysis', 10)
         self._pub_report   = self.create_publisher(String, '/llm/scan_report',   10)
@@ -99,17 +98,6 @@ class LLMScanAnalyzer(Node):
         }
         self.get_logger().info(f'inventory_vision_shelf 데이터 수신: {normalized}')
         threading.Thread(target=self._call_llm, args=(normalized,), daemon=True).start()
-
-    def _scan_cb(self, msg: String):
-        raw = msg.data.strip()
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
-            self.get_logger().warn(f'JSON 파싱 실패: {raw}')
-            return
-
-        self.get_logger().info(f'스캔 데이터 수신: {data}')
-        threading.Thread(target=self._call_llm, args=(data,), daemon=True).start()
 
     def _call_llm(self, data: dict):
         if self._client is None:

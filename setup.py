@@ -34,8 +34,6 @@ setup(
             'llm_scan_analyzer = warehouse_offboard.llm_scan_analyzer:main',
             'inventory_reporter = warehouse_offboard.inventory_reporter:main',
             'result_report_node = warehouse_offboard.result_report_node:main',
-            'inv_counter_node = warehouse_offboard.inv_counter_node:main',
-            'qr_detection_node = warehouse_offboard.qr_detection_node:main',
         ],
     },
 )
