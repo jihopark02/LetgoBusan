@@ -127,6 +127,7 @@ class LLMNode(Node):
         self._mission_status = 'IDLE'
         self._pos = {'x': 0.0, 'y': 0.0, 'z': 0.0}
         self._history: list[dict] = []
+        self._history_lock = threading.Lock()
         self._last_report: str = ''
         self._last_scan_item: str = ''
 
@@ -148,8 +149,18 @@ class LLMNode(Node):
 
         self.get_logger().info('llm_node 시작 (/llm/user_input 구독 중)')
 
+    _REJECTED_MSG = {
+        'BUSY':             '현재 미션이 진행 중입니다. 완료 후 다시 시도해주세요.',
+        'UNKNOWN_TARGET':   '알 수 없는 목표 구역입니다.',
+        'POSITION_INVALID': '드론 위치 정보가 유효하지 않습니다.',
+    }
+
     def _status_cb(self, msg: String):
         self._mission_status = msg.data
+        if msg.data.startswith('MISSION_REJECTED:'):
+            reason = msg.data.split(':', 1)[1]
+            text = self._REJECTED_MSG.get(reason, '명령이 거부되었습니다.')
+            self._resp_pub.publish(String(data=text))
 
     def _pos_cb(self, msg: VehicleLocalPosition):
         self._pos = {
@@ -191,7 +202,8 @@ class LLMNode(Node):
         raw = ''
         try:
             user_msg = {'role': 'user', 'content': self._build_user_message(user_text)}
-            messages = [{'role': 'system', 'content': self._system_prompt}] + self._history + [user_msg]
+            with self._history_lock:
+                messages = [{'role': 'system', 'content': self._system_prompt}] + list(self._history) + [user_msg]
 
             resp = self._client.chat.completions.create(
                 model='gpt-5-mini',
@@ -223,9 +235,10 @@ class LLMNode(Node):
             }
             output_str = json.dumps(output, ensure_ascii=False)
 
-            self._history.append(user_msg)
-            self._history.append({'role': 'assistant', 'content': raw})
-            self._history = self._history[-10:]  # 최근 5턴 유지
+            with self._history_lock:
+                self._history.append(user_msg)
+                self._history.append({'role': 'assistant', 'content': raw})
+                self._history = self._history[-10:]
 
             self.get_logger().info(f'LLM 출력 → /llm/mission_command: {output_str}')
             self._cmd_pub.publish(String(data=output_str))
@@ -233,10 +246,13 @@ class LLMNode(Node):
 
         except json.JSONDecodeError as e:
             self.get_logger().error(f'JSON 파싱 실패: {e} / 원문: {raw}')
+            self._resp_pub.publish(String(data='응답 처리 중 오류가 발생했습니다. 다시 시도해주세요.'))
         except ValueError as e:
             self.get_logger().error(f'검증 실패: {e}')
+            self._resp_pub.publish(String(data='명령을 처리할 수 없습니다. 다시 말씀해주세요.'))
         except Exception as e:
             self.get_logger().error(f'LLM 호출 오류: {e}')
+            self._resp_pub.publish(String(data='서비스 연결에 실패했습니다. 잠시 후 다시 시도해주세요.'))
 
 
 def main(args=None):

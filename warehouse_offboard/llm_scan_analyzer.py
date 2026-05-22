@@ -153,7 +153,6 @@ class LLMScanAnalyzer(Node):
                     {'role': 'system', 'content': SYSTEM_PROMPT},
                     {'role': 'user',   'content': user_message},
                 ],
-                temperature=0.3,
                 response_format={'type': 'json_object'},
             )
 
