@@ -75,6 +75,9 @@ User: "포도 박스만 스캔해줘"
 
 User: "딸기랑 수박 재고 확인해줘"
 {{"mission_type": "inventory_scan", "targets": ["A-02"], "item_filter": "딸기,수박", "response": "딸기와 수박이 있는 A-02 구역을 스캔합니다."}}
+
+User: "go home"
+{{"mission_type": "status", "targets": [], "item_filter": null, "response": "드론은 미션 완료 후 자동으로 홈 위치로 복귀합니다. 별도의 홈 이동 명령은 없습니다."}}
 """
 
 
