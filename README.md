@@ -42,8 +42,7 @@ warehouse_offboard/
 │   ├── inventory_reporter.py     # 재고 보고서 출력 및 CSV 저장
 │   ├── result_report_node.py     # 최종 GPT 종합 보고서
 │   ├── inv_counter_node.py       # 품목별 수량 카운팅
-│   ├── qr_detection_node.py      # QR 인식 노드
-│   └── llm_selector.py           # 규칙 기반 타겟 선택
+│   └── qr_detection_node.py      # QR 인식 노드
 ├── params/
 │   ├── goto_point.yaml           # 드론 미션 파라미터
 │   ├── inventory_db_shelf.yaml   # 재고 DB
