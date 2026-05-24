@@ -15,9 +15,22 @@ _DB_PATH = os.path.join(
 
 # 재고 임계값 (이 수량 이하면 "보충 필요" 판단)
 THRESHOLDS = {
-    "banana": 2,
-    "apple":  2,
-    "grape":  2,
+    "grape":              5,
+    "apple":              10,
+    "strawberry":         5,
+    "watermelon":         3,
+    "ramen":              30,
+    "canned food":        20,
+    "water bottle":       50,
+    "snack":              15,
+    "t-shirt":            10,
+    "jeans":              8,
+    "sneakers":           5,
+    "jacket":             5,
+    "wireless earbuds":   8,
+    "smartwatch":         3,
+    "bluetooth speaker":  5,
+    "power bank":         8,
 }
 
 SYSTEM_PROMPT = """\
