@@ -62,6 +62,7 @@ class ArucoLandNode(Node):
         self.align_hold_counter = 0.0
         self.land_cmd_sent      = False
         self.disarm_sent        = False
+        self._marker_aligned    = False
 
         self._lock  = threading.Lock()
         self.bridge = CvBridge()
@@ -144,6 +145,7 @@ class ArucoLandNode(Node):
             self.debug_pub.publish(self.bridge.cv2_to_imgmsg(debug_frame, encoding='bgr8'))
             if self.state == self.ALIGNING:
                 with self._lock:
+                    self._marker_aligned = False
                     self.align_hold_counter = 0.0
                     self.state = self.SEARCHING
             return
@@ -198,9 +200,9 @@ class ArucoLandNode(Node):
         with self._lock:
             if self.sp_x is None: return
             self.state = self.ALIGNING
-            self.align_hold_counter += 0.1
+            self._marker_aligned = err_total < self.align_tol
             self.get_logger().info(
-                f'[ARUCO ✓] err={err_total:.3f}m hold={self.align_hold_counter:.1f}/{self.align_hold_sec}s')
+                f'[ARUCO ✓] err={err_total:.3f}m aligned={self._marker_aligned}')
 
     def control_loop(self):
         if self.state == self.IDLE: return
@@ -213,7 +215,11 @@ class ArucoLandNode(Node):
             self._pub_ocm()
             with self._lock:
                 if self.sp_x is None: return
-                if self.state==self.ALIGNING and self.align_hold_counter>=self.align_hold_sec:
+                if self._marker_aligned:
+                    self.align_hold_counter += 0.1  # 10Hz timer → 0.1s per tick
+                else:
+                    self.align_hold_counter = 0.0
+                if self.state == self.ALIGNING and self.align_hold_counter >= self.align_hold_sec:
                     self.get_logger().info('마커 확인 완료! → LANDING')
                     self.state = self.LANDING; return
                 self.sp_z += self.descent_speed * 0.1
