@@ -109,9 +109,11 @@ class ArucoLandNode(Node):
                 self.state = self.SEARCHING
 
     def local_pos_cb(self, msg: VehicleLocalPosition):
-        self.cur_x=float(msg.x); self.cur_y=float(msg.y)
-        self.cur_z=float(msg.z); self.cur_heading=float(msg.heading)
-        self.pos_valid=bool(msg.xy_valid and msg.z_valid)
+        self.cur_x = float(msg.x)
+        self.cur_y = float(msg.y)
+        self.cur_z = float(msg.z)
+        self.cur_heading = float(msg.heading)
+        self.pos_valid = bool(msg.xy_valid and msg.z_valid)
 
     def land_detected_cb(self, msg: VehicleLandDetected):
         self.landed = bool(msg.landed)
@@ -244,29 +246,48 @@ class ArucoLandNode(Node):
                 self.state = self.IDLE
 
     def _pub_ocm(self):
-        msg=OffboardControlMode(); msg.timestamp=self.get_clock().now().nanoseconds//1000; msg.position=True
+        msg = OffboardControlMode()
+        msg.timestamp = self.get_clock().now().nanoseconds // 1000
+        msg.position = True
         self.ocm_pub.publish(msg)
 
-    def _pub_sp(self,x,y,z,yaw):
-        msg=TrajectorySetpoint(); msg.timestamp=self.get_clock().now().nanoseconds//1000
-        msg.position=[float(x),float(y),float(z)]; msg.yaw=float(yaw)
+    def _pub_sp(self, x, y, z, yaw):
+        msg = TrajectorySetpoint()
+        msg.timestamp = self.get_clock().now().nanoseconds // 1000
+        msg.position = [float(x), float(y), float(z)]
+        msg.yaw = float(yaw)
         self.sp_pub.publish(msg)
 
-    def _send_cmd(self,command,param1=0.0,param2=0.0):
-        msg=VehicleCommand(); msg.timestamp=self.get_clock().now().nanoseconds//1000
-        msg.param1=float(param1); msg.param2=float(param2); msg.command=int(command)
-        msg.target_system=1; msg.target_component=1; msg.source_system=1; msg.source_component=1; msg.from_external=True
+    def _send_cmd(self, command, param1=0.0, param2=0.0):
+        msg = VehicleCommand()
+        msg.timestamp = self.get_clock().now().nanoseconds // 1000
+        msg.param1 = float(param1)
+        msg.param2 = float(param2)
+        msg.command = int(command)
+        msg.target_system = 1
+        msg.target_component = 1
+        msg.source_system = 1
+        msg.source_component = 1
+        msg.from_external = True
         self.cmd_pub.publish(msg)
 
-    def _pub_status(self,text):
-        msg=String(); msg.data=text; self.status_pub.publish(msg)
+    def _pub_status(self, text):
+        msg = String()
+        msg.data = text
+        self.status_pub.publish(msg)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node=ArucoLandNode()
-    try: rclpy.spin(node)
-    except KeyboardInterrupt: node.get_logger().info('aruco_land stopped by user')
-    finally: node.destroy_node(); rclpy.shutdown()
+    node = ArucoLandNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info('aruco_land stopped by user')
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
-if __name__=='__main__': main()
+
+if __name__ == '__main__':
+    main()
