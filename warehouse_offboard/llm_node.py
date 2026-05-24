@@ -83,8 +83,6 @@ User: "go home"
 
 def _build_db_section(db_path: str) -> str:
     try:
-        abs_path = os.path.normpath(os.path.join(os.path.dirname(__file__), db_path[3:] if db_path.startswith('../') else db_path))
-        # Try direct path first
         candidates = [
             db_path,
             os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'params', 'inventory_db_shelf.yaml')),

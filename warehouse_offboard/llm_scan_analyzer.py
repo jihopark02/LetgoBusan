@@ -85,7 +85,7 @@ class LLMScanAnalyzer(Node):
             self.get_logger().warn(f'JSON 파싱 실패: {raw}')
             return
 
-        location = data.get('shelf_text_detected') or data.get('expected_location_from_db', '')
+        location = data.get('expected_location_from_db', '')
         if location and '-L' in location:
             location = location.rsplit('-L', 1)[0]
 
