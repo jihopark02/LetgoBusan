@@ -162,6 +162,7 @@ class InventoryVisionShelf(Node):
                         known_barcode=known_barcode,
                         expected=expected,
                         target_match=target_match,
+                        item=item,
                     )
                 return
 
@@ -191,6 +192,7 @@ class InventoryVisionShelf(Node):
                 known_barcode=known_barcode,
                 expected=expected,
                 target_match=target_match,
+                item=item,
             )
 
     def decode_barcodes_zbar(self, frame: np.ndarray) -> Tuple[List[str], List[Tuple[int, int, int, int]]]:
@@ -357,20 +359,22 @@ class InventoryVisionShelf(Node):
         known_barcode: Optional[str],
         expected: Optional[str],
         target_match: bool,
+        item: Optional[Dict[str, Any]] = None,
     ):
         debug = frame.copy()
 
         for (x, y, w, h) in boxes:
             cv2.rectangle(debug, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-        lines = [
-            "MODE: QR_ONLY",
-            f"known_barcode: {known_barcode}",
-            f"all_barcodes: {barcodes}",
-            "shelf_text: NOT USED",
-            f"expected: {expected}",
-            f"target_match: {target_match}",
-        ]
+        lines = []
+        if known_barcode and item:
+            item_name = item.get('item_name', '')
+            quantity = item.get('quantity', '')
+            lines.append(f"Item: {item_name}")
+            lines.append(f"Qty: {quantity}")
+            lines.append(f"Match: {target_match}")
+        elif known_barcode:
+            lines.append(f"Barcode: {known_barcode}")
 
         y = 25
         for line in lines:
