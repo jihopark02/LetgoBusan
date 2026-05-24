@@ -44,40 +44,47 @@ A-04 : Zone 4, top-left shelf
 - The targets array must contain only valid values (A-01, A-02, A-03, A-04)
 - item_filter: set this field only when a specific item name is explicitly mentioned, otherwise null
 - If item_filter is set, targets must include only the zones where that item is stored
-- Map user expressions to item_name in the DB using inference (e.g., "grapes" → item_filter: "포도")
+- Map user expressions to item_name in the DB using inference (e.g., "grapes" → item_filter: "grape")
 - Even if the user uses varied expressions for zone numbers, directions, locations, or item names, infer the correct zone(s) from context and the DB
 - The response value must be a natural Korean sentence to be shown to the user
 
+## scan_layers Rules
+- scan_layers specifies which shelf layers (1~4) to scan per zone
+- If item_filter is set: look up the DB to find which exact layer each item is on, then set scan_layers to only those layers
+- If item_filter is null (full zone scan): set scan_layers to null
+- scan_layers format: {{"A-01": [1, 3], "A-03": [2]}} — layer numbers are 1-indexed (L1=1, L2=2, L3=3, L4=4)
+- Multiple items in the same zone: combine their layers, e.g. grape(L1) + strawberry(L3) in A-01 → {{"A-01": [1, 3]}}
+
 ## Output Format
-{{"mission_type": "...", "targets": [...], "item_filter": null, "response": "..."}}
+{{"mission_type": "...", "targets": [...], "scan_layers": null, "item_filter": null, "response": "..."}}
 
 ## 예시
 User: "창고 전체 재고 조사해줘"
-{{"mission_type": "inventory_scan", "targets": ["A-01", "A-02", "A-03", "A-04"], "item_filter": null, "response": "전체 4개 구역을 순회하며 재고를 조사합니다."}}
+{{"mission_type": "inventory_scan", "targets": ["A-01", "A-02", "A-03", "A-04"], "scan_layers": null, "item_filter": null, "response": "전체 4개 구역을 순회하며 재고를 조사합니다."}}
 
 User: "1구역 전체 재고조사 해줘"
-{{"mission_type": "inventory_scan", "targets": ["A-01"], "item_filter": null, "response": "1구역(A-01)으로 이동하여 재고를 조사합니다."}}
+{{"mission_type": "inventory_scan", "targets": ["A-01"], "scan_layers": null, "item_filter": null, "response": "1구역(A-01)으로 이동하여 재고를 조사합니다."}}
 
 User: "우측 선반 다 확인해줘"
-{{"mission_type": "inventory_scan", "targets": ["A-01", "A-03"], "item_filter": null, "response": "우측 구역(A-01, A-03)을 순서대로 조사합니다."}}
+{{"mission_type": "inventory_scan", "targets": ["A-01", "A-03"], "scan_layers": null, "item_filter": null, "response": "우측 구역(A-01, A-03)을 순서대로 조사합니다."}}
 
 User: "2번 구역 가봐"
-{{"mission_type": "goto", "targets": ["A-02"], "item_filter": null, "response": "2구역(A-02)으로 이동합니다."}}
+{{"mission_type": "goto", "targets": ["A-02"], "scan_layers": null, "item_filter": null, "response": "2구역(A-02)으로 이동합니다."}}
 
 User: "[드론 상태] 미션=IDLE | 위치 x=5.2m, y=3.1m, 고도=2.0m\n[사용자 명령] 지금 어디야?"
-{{"mission_type": "status", "targets": [], "item_filter": null, "response": "현재 드론은 x=5.2m, y=3.1m, 고도 2.0m 위치에서 대기 중입니다."}}
+{{"mission_type": "status", "targets": [], "scan_layers": null, "item_filter": null, "response": "현재 드론은 x=5.2m, y=3.1m, 고도 2.0m 위치에서 대기 중입니다."}}
 
-User: "[드론 상태] 미션=SCANNING | 위치 x=1.0m, y=0.5m, 고도=1.5m\n[사용자 명령] 지금 뭐해?"
-{{"mission_type": "status", "targets": [], "item_filter": null, "response": "현재 스캔 미션을 수행 중입니다. 위치는 x=1.0m, y=0.5m, 고도 1.5m입니다."}}
+User: "포도 스캔해줘"
+{{"mission_type": "inventory_scan", "targets": ["A-01"], "scan_layers": {{"A-01": [1]}}, "item_filter": "grape", "response": "포도가 있는 A-01 구역 1층만 스캔합니다."}}
 
-User: "포도 박스만 스캔해줘"
-{{"mission_type": "inventory_scan", "targets": ["A-01"], "item_filter": "포도", "response": "포도가 보관된 A-01 구역을 스캔합니다."}}
+User: "포도랑 티셔츠 재고 확인해줘"
+{{"mission_type": "inventory_scan", "targets": ["A-01", "A-03"], "scan_layers": {{"A-01": [1], "A-03": [1]}}, "item_filter": "grape,t-shirt", "response": "포도(A-01 L1)와 티셔츠(A-03 L1) 위치만 스캔합니다."}}
 
-User: "딸기랑 수박 재고 확인해줘"
-{{"mission_type": "inventory_scan", "targets": ["A-02"], "item_filter": "딸기,수박", "response": "딸기와 수박이 있는 A-02 구역을 스캔합니다."}}
+User: "포도랑 딸기 확인해줘"
+{{"mission_type": "inventory_scan", "targets": ["A-01"], "scan_layers": {{"A-01": [1, 3]}}, "item_filter": "grape,strawberry", "response": "A-01 구역의 포도(L1)와 딸기(L3)만 스캔합니다."}}
 
 User: "go home"
-{{"mission_type": "status", "targets": [], "item_filter": null, "response": "드론은 미션 완료 후 자동으로 홈 위치로 복귀합니다. 별도의 홈 이동 명령은 없습니다."}}
+{{"mission_type": "status", "targets": [], "scan_layers": null, "item_filter": null, "response": "드론은 미션 완료 후 자동으로 홈 위치로 복귀합니다. 별도의 홈 이동 명령은 없습니다."}}
 """
 
 
@@ -219,6 +226,7 @@ class LLMNode(Node):
             mission_type = result.get('mission_type', '')
             targets = result.get('targets', [])
             item_filter = result.get('item_filter') or None
+            scan_layers = result.get('scan_layers') or None
             response_text = result.get('response', '명령을 처리했습니다.')
 
             if mission_type not in ('inventory_scan', 'goto', 'status'):
@@ -228,9 +236,19 @@ class LLMNode(Node):
             if targets and not valid_targets:
                 raise ValueError(f'유효하지 않은 targets: {targets}')
 
+            if scan_layers:
+                scan_layers = {
+                    zone: sorted(set(int(l) for l in layers if 1 <= int(l) <= 4))
+                    for zone, layers in scan_layers.items()
+                    if zone in WAYPOINT_INFO and layers
+                }
+                if not scan_layers:
+                    scan_layers = None
+
             output = {
                 'mission_type': mission_type,
                 'targets': valid_targets,
+                'scan_layers': scan_layers,
                 'item_filter': item_filter,
                 'response': response_text,
             }
