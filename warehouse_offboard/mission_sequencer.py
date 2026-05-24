@@ -54,13 +54,15 @@ class MissionSequencer(Node):
         if not status.startswith('MISSION_FINISHED:'):
             return
         finished = status.split(':', 1)[1]
-        # _active는 JSON 인코딩된 문자열이므로 zone 이름으로 비교
+
         try:
             active_zone = json.loads(self._active).get('zone') if self._active else None
         except (json.JSONDecodeError, AttributeError):
             active_zone = self._active
-        if finished == active_zone:
-            self.get_logger().info(f'완료 확인: {finished} — 다음 타겟으로')
+
+        # 정상 완료(마지막 구역 일치) 또는 인터럽트(pending 있음) 둘 다 처리
+        if finished == active_zone or self._pending_queue:
+            self.get_logger().info(f'완료 확인: {finished} — 다음 배치로')
             self._active = None
             if self._pending_queue:
                 self._queue = self._pending_queue
@@ -72,10 +74,17 @@ class MissionSequencer(Node):
         if not self._queue:
             self.get_logger().info('모든 미션 완료')
             return
-        target = self._queue.pop(0)
-        self._active = target
-        self._target_pub.publish(String(data=target))
-        self.get_logger().info(f'발행 → /mission_target_name: {target}')
+
+        # 전체 큐를 배치로 전송 — goto_point가 선반 간 연속 비행 처리
+        targets = [json.loads(t) for t in self._queue]
+        payload = json.dumps({'targets': targets}, ensure_ascii=False)
+
+        # 마지막 구역을 MISSION_FINISHED 감지용으로 추적
+        self._active = self._queue[-1]
+        self._queue = []
+
+        self._target_pub.publish(String(data=payload))
+        self.get_logger().info(f'발행 → /mission_target_name (배치 {len(targets)}개): {payload}')
 
 
 def main(args=None):

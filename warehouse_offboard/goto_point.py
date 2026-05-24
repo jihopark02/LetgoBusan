@@ -204,6 +204,8 @@ class GotoPoint(Node):
 
         self.pending_target_name: Optional[str] = None
         self.pending_layer_queue: List[int] = [0, 1, 2, 3]
+        self.pending_remaining_targets: List[Dict] = []
+        self.remaining_targets: List[Dict] = []
         self.last_finished_target: Optional[str] = None
 
         self.phase = 'WAIT_HOME'
@@ -257,6 +259,7 @@ class GotoPoint(Node):
         if self.phase in ['WAIT_HOME', 'FINISHED', 'INTERRUPT_HOVER']:
             return
         self._from_interrupt = not self.landed
+        self.remaining_targets = []  # 배치 내 나머지 구역 포기
         self.publish_mission_status(f'MISSION_FINISHED:{self.target_name}')
         self.phase = 'INTERRUPT_HOVER'
         self.get_logger().info(
@@ -300,15 +303,35 @@ class GotoPoint(Node):
     def mission_target_callback(self, msg: String):
         raw = msg.data.strip()
 
-        # JSON 형식 {"zone": "A-01", "layers": [1,2,3,4]} 또는 plain 문자열 "A-01" 지원
         try:
             parsed = json.loads(raw)
-            target_name = parsed.get('zone', '').upper()
-            layers_1indexed = parsed.get('layers', [1, 2, 3, 4])
-            pending_layer_queue = [int(l) - 1 for l in layers_1indexed if 1 <= int(l) <= 4]
+            # 배치 형식: {"targets": [{"zone":"A-01","layers":[1]}, ...]}
+            if 'targets' in parsed:
+                target_list = parsed['targets']
+                if not target_list:
+                    return
+                first = target_list[0]
+                target_name = str(first.get('zone', '')).upper()
+                layers_1idx = first.get('layers', [1, 2, 3, 4])
+                pending_layer_queue = [int(l) - 1 for l in layers_1idx if 1 <= int(l) <= 4]
+                pending_remaining = [
+                    {
+                        'zone': str(t.get('zone', '')).upper(),
+                        'layers': [int(l) - 1 for l in t.get('layers', [1, 2, 3, 4]) if 1 <= int(l) <= 4],
+                    }
+                    for t in target_list[1:]
+                    if t.get('zone')
+                ]
+            else:
+                # 단일 형식: {"zone":"A-01","layers":[1]}
+                target_name = str(parsed.get('zone', '')).upper()
+                layers_1idx = parsed.get('layers', [1, 2, 3, 4])
+                pending_layer_queue = [int(l) - 1 for l in layers_1idx if 1 <= int(l) <= 4]
+                pending_remaining = []
         except (json.JSONDecodeError, ValueError):
             target_name = raw.upper()
             pending_layer_queue = [0, 1, 2, 3]
+            pending_remaining = []
 
         if not pending_layer_queue:
             pending_layer_queue = [0, 1, 2, 3]
@@ -327,9 +350,9 @@ class GotoPoint(Node):
 
         self.pending_target_name = target_name
         self.pending_layer_queue = pending_layer_queue
-        self.get_logger().info(
-            f'Pending mission target set: {target_name}, layers={[l+1 for l in pending_layer_queue]}'
-        )
+        self.pending_remaining_targets = pending_remaining
+        zones = [target_name] + [t['zone'] for t in pending_remaining]
+        self.get_logger().info(f'Pending mission batch: {zones}')
         self.publish_mission_status(f'명령 수신: {target_name}')
 
     def vehicle_local_position_callback(self, msg: VehicleLocalPosition):
@@ -403,6 +426,7 @@ class GotoPoint(Node):
 
         self.scan_index = 0
         self.scan_layer_queue = list(self.pending_layer_queue)
+        self.remaining_targets = list(self.pending_remaining_targets)
         self.scan_hover_counter = 0
         self.scan_wait_counter = 0
         self.scan_results = {}
@@ -489,6 +513,21 @@ class GotoPoint(Node):
 
     def compute_distance(self, x1, y1, z1, x2, y2, z2):
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
+
+    def _setup_next_target(self, zone: str, layer_queue: List[int]):
+        self.target_name = zone
+        self.target_world = self.waypoint_map[zone]
+        self.target_local_x, self.target_local_y = self.world_to_local_xy(
+            self.target_world[0], self.target_world[1]
+        )
+        self.scan_layer_queue = layer_queue
+        self.scan_index = 0
+        self.scan_hover_counter = 0
+        self.scan_wait_counter = 0
+        self.get_logger().info(
+            f'Next target: {zone}, layers={[l+1 for l in layer_queue]}, '
+            f'local_xy=({self.target_local_x:.2f}, {self.target_local_y:.2f})'
+        )
 
     def print_scan_summary(self):
         self.get_logger().info('\n===== 선반 재고 조사 요약 =====')
@@ -579,6 +618,9 @@ class GotoPoint(Node):
 
         if self.phase == 'SCAN_LAYER':
             return [self.target_local_x, self.target_local_y, self.current_scan_z(), self.aligned_yaw()]
+
+        if self.phase == 'MOVE_NEXT':
+            return [self.target_local_x, self.target_local_y, self.scan_layer_z[0], self.aligned_yaw()]
 
         if self.phase == 'RETURN_GLOBAL_X':
             return [self.target_local_x, self.home_y, self.scan_layer_z[0], self.aligned_yaw()]
@@ -740,13 +782,25 @@ class GotoPoint(Node):
                     if self.scan_index >= len(self.scan_layer_queue):
                         self.print_scan_summary()
                         self.publish_mission_status(f'SCAN_DONE:{self.target_name}')
-                        self.phase = 'RETURN_GLOBAL_X'
+
+                        if self.remaining_targets:
+                            next_t = self.remaining_targets.pop(0)
+                            self._setup_next_target(next_t['zone'], next_t['layers'] or [0, 1, 2, 3])
+                            self.phase = 'MOVE_NEXT'
+                            self.publish_mission_status(f'MOVING_TO:{self.target_name}')
+                        else:
+                            self.phase = 'RETURN_GLOBAL_X'
                     else:
                         next_loc = self.current_scan_location()
                         self.get_logger().info(f'Moving to next layer: {next_loc}')
                         self.publish_mission_status(f'SCAN_NEXT:{next_loc}')
             else:
                 self.scan_hover_counter = 0
+
+        elif self.phase == 'MOVE_NEXT':
+            if self.reached_x(self.target_local_x) and self.reached_y(self.target_local_y):
+                self.phase = 'SCAN_LAYER'
+                self.publish_mission_status(f'SCAN_START:{self.target_name}')
 
         elif self.phase == 'RETURN_GLOBAL_X':
             if self.reached_y(self.home_y):
