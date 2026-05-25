@@ -47,6 +47,8 @@ A-04 : Zone 4, top-left shelf
 - Map user expressions to item_name in the DB using inference (e.g., "grapes" → item_filter: "grape")
 - Even if the user uses varied expressions for zone numbers, directions, locations, or item names, infer the correct zone(s) from context and the DB
 - The response value must be a natural Korean sentence to be shown to the user
+- If the user asks about inventory quantities, prices, or locations (e.g., "how many X?", "what is the price of X?", "where is X?"), answer directly from the DB with mission_type: "status" — do NOT trigger inventory_scan
+- Only use inventory_scan when the user explicitly requests a physical scan (e.g., "scan", "check", "verify", "스캔해줘", "재고 조사")
 
 ## scan_layers Rules
 - scan_layers specifies which shelf layers (1~4) to scan per zone
@@ -85,7 +87,12 @@ User: "포도랑 딸기 확인해줘"
 
 User: "go home"
 {{"mission_type": "status", "targets": [], "scan_layers": null, "item_filter": null, "response": "드론은 미션 완료 후 자동으로 홈 위치로 복귀합니다. 별도의 홈 이동 명령은 없습니다."}}
-"""
+
+User: "포도 몇 개야?"
+{{"mission_type": "status", "targets": [], "scan_layers": null, "item_filter": null, "response": "DB 기준 포도(grape)는 A-01 구역 1층에 21개 있습니다."}}
+
+User: "what is the most expensive thing in this warehouse?"
+{{"mission_type": "status", "targets": [], "scan_layers": null, "item_filter": null, "response": "DB 기준 가장 비싼 물품은 수박(watermelon)으로 12,000원입니다(A-01 L4)."}}"""
 
 
 def _build_db_section(db_path: str) -> str:
@@ -109,7 +116,8 @@ def _build_db_section(db_path: str) -> str:
             loc = info.get('expected_location', '')
             item = info.get('item_name', '')
             qty = info.get('quantity', '')
-            lines.append(f'- {sku} : {item}, 위치={loc}, 수량={qty}')
+            price = info.get('price', '')
+            lines.append(f'- {sku} : {item}, 위치={loc}, 수량={qty}, 가격={price}원')
         return '\n'.join(lines)
     except Exception:
         return ''
@@ -151,6 +159,7 @@ class LLMNode(Node):
         self.create_subscription(String, '/llm/user_input', self._user_input_cb, 10)
         self.create_subscription(String, '/llm/final_report', self._report_cb, 10)
         self.create_subscription(String, '/llm/scan_report', self._scan_report_cb, 10)
+        self.create_subscription(String, '/inventory_scan_result', self._inventory_result_cb, 10)
 
         self._cmd_pub = self.create_publisher(String, '/llm/mission_command', 10)
         self._resp_pub = self.create_publisher(String, '/llm/response_text', 10)
@@ -188,7 +197,19 @@ class LLMNode(Node):
         self._last_report = msg.data
 
     def _scan_report_cb(self, msg: String):
-        self._last_scan_item = msg.data
+        self._last_scan_item = msg.data  # LLM 컨텍스트용
+
+    def _inventory_result_cb(self, msg: String):
+        """QR 감지 즉시 실시간 표시 — GPT 분석 딜레이 없음"""
+        try:
+            data = json.loads(msg.data)
+            item     = data.get('item_name', '')
+            qty      = data.get('quantity', '')
+            location = data.get('expected_location_from_db', '')
+            if item and qty:
+                self._resp_pub.publish(String(data=f'[스캔] {location} | {item} | 수량 {qty}개'))
+        except (json.JSONDecodeError, AttributeError):
+            pass
 
     def _build_user_message(self, user_text: str) -> str:
         report_section = f"[최근 스캔 보고서] {self._last_report}\n" if self._last_report else ''
