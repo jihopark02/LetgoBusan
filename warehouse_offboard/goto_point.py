@@ -207,6 +207,7 @@ class GotoPoint(Node):
         self.pending_remaining_targets: List[Dict] = []
         self.remaining_targets: List[Dict] = []
         self.last_finished_target: Optional[str] = None
+        self._next_pending: Optional[Dict] = None
 
         self.phase = 'WAIT_HOME'
         self.prev_phase = ''
@@ -427,6 +428,7 @@ class GotoPoint(Node):
         self.scan_index = 0
         self.scan_layer_queue = list(self.pending_layer_queue)
         self.remaining_targets = list(self.pending_remaining_targets)
+        self._next_pending = None
         self.scan_hover_counter = 0
         self.scan_wait_counter = 0
         self.scan_results = {}
@@ -620,7 +622,8 @@ class GotoPoint(Node):
             return [self.target_local_x, self.target_local_y, self.current_scan_z(), self.aligned_yaw()]
 
         if self.phase == 'MOVE_NEXT':
-            return [self.target_local_x, self.target_local_y, self.scan_layer_z[0], self.aligned_yaw()]
+            # home_y(통로)를 경유해 선반 충돌 방지
+            return [self.target_local_x, self.home_y, self.scan_layer_z[0], self.aligned_yaw()]
 
         if self.phase == 'RETURN_GLOBAL_X':
             return [self.target_local_x, self.home_y, self.scan_layer_z[0], self.aligned_yaw()]
@@ -784,10 +787,9 @@ class GotoPoint(Node):
                         self.publish_mission_status(f'SCAN_DONE:{self.target_name}')
 
                         if self.remaining_targets:
-                            next_t = self.remaining_targets.pop(0)
-                            self._setup_next_target(next_t['zone'], next_t['layers'] or [0, 1, 2, 3])
+                            self._next_pending = self.remaining_targets.pop(0)
                             self.phase = 'MOVE_NEXT'
-                            self.publish_mission_status(f'MOVING_TO:{self.target_name}')
+                            self.publish_mission_status(f'MOVING_TO:{self._next_pending["zone"]}')
                         else:
                             self.phase = 'RETURN_GLOBAL_X'
                     else:
@@ -798,9 +800,13 @@ class GotoPoint(Node):
                 self.scan_hover_counter = 0
 
         elif self.phase == 'MOVE_NEXT':
-            if self.reached_x(self.target_local_x) and self.reached_y(self.target_local_y):
-                self.phase = 'SCAN_LAYER'
-                self.publish_mission_status(f'SCAN_START:{self.target_name}')
+            if self.reached_y(self.home_y):
+                self._setup_next_target(
+                    self._next_pending['zone'],
+                    self._next_pending['layers'] or [0, 1, 2, 3]
+                )
+                self._next_pending = None
+                self.phase = 'MOVE_GLOBAL_Y'
 
         elif self.phase == 'RETURN_GLOBAL_X':
             if self.reached_y(self.home_y):
