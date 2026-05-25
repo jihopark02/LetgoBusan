@@ -96,7 +96,15 @@ class InventoryVisionShelf(Node):
         self.get_logger().info("Shelf text OCR is disabled. Inventory is determined from QR only.")
 
     def target_callback(self, msg: String):
-        self.current_target = msg.data.strip().upper()
+        raw = msg.data.strip()
+        # mission_sequencer가 JSON 배치 포맷으로 발행함 → 첫 번째 zone만 추출
+        try:
+            parsed = json.loads(raw)
+            targets = parsed.get('targets', [])
+            zone = targets[0].get('zone', '') if targets else ''
+            self.current_target = zone.upper()
+        except (json.JSONDecodeError, AttributeError, IndexError):
+            self.current_target = raw.upper()
 
         # 새 선반 명령이 들어오면 이전 스캔 기록 초기화
         self.published_locations.clear()
