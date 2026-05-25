@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
+import os
 import threading
 import time
 import math
+
+# SDL2가 ibus IME를 사용하도록 설정 (한글 입력)
+os.environ.setdefault('SDL_IM_MODULE', 'ibus')
 
 import pygame
 import rclpy
@@ -104,11 +108,11 @@ class LLMInterface:
         self.ros_node = ros_node
 
         pygame.init()
-        pygame.key.start_text_input()
 
         self.W, self.H = 960, 700
         self.screen = pygame.display.set_mode((self.W, self.H), pygame.RESIZABLE)
         pygame.display.set_caption("Drone Mission Chat UI")
+        pygame.key.start_text_input()  # 윈도우 생성 후 IME 바인딩
 
         # 폰트 (이모지 없는 시스템 폰트)
         self.font_title  = pygame.font.SysFont('Noto Sans CJK KR', 22, bold=True)
