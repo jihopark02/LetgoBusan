@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "params"
+		},
+		{
+			"path": "resource"
+		},
+		{
+			"path": "test"
+		},
+		{
+			"path": "warehouse_offboard"
+		},
+		{
+			"path": "worlds"
+		}
+	]
+}
