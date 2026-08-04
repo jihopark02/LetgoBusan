@@ -5,15 +5,88 @@ import threading
 import time
 import math
 
-# SDL2가 ibus IME를 사용하도록 설정 (한글 입력)
-os.environ.setdefault('SDL_IM_MODULE', 'ibus')
+# 오토마타 직접 구현 방식 → OS IME가 키를 가로채지 않도록 비활성화
+os.environ['XMODIFIERS'] = ''
+os.environ['GTK_IM_MODULE'] = 'none'
+os.environ['QT_IM_MODULE'] = 'none'
 
 import pygame
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
+try:
+    from hangul_utils import join_jamos
+    _HANGUL_OK = True
+except ImportError:
+    _HANGUL_OK = False
 
+# ── 한글 오토마타 (OS IME 없이 직접 조합) ─────────────────────
+class KoreanInput:
+    CONS = {'r':'ㄱ','R':'ㄲ','s':'ㄴ','e':'ㄷ','E':'ㄸ','f':'ㄹ','a':'ㅁ','q':'ㅂ','Q':'ㅃ',
+            't':'ㅅ','T':'ㅆ','d':'ㅇ','w':'ㅈ','W':'ㅉ','c':'ㅊ','z':'ㅋ','x':'ㅌ','v':'ㅍ','g':'ㅎ'}
+    VOWELS = {'k':'ㅏ','o':'ㅐ','i':'ㅑ','O':'ㅒ','j':'ㅓ','p':'ㅔ','u':'ㅕ','P':'ㅖ','h':'ㅗ',
+              'hk':'ㅘ','ho':'ㅙ','hl':'ㅚ','y':'ㅛ','n':'ㅜ','nj':'ㅝ','np':'ㅞ','nl':'ㅟ',
+              'b':'ㅠ','m':'ㅡ','ml':'ㅢ','l':'ㅣ'}
+    CONS_DOUBLE = {'rt':'ㄳ','sw':'ㄵ','sg':'ㄶ','fr':'ㄺ','fa':'ㄻ','fq':'ㄼ','ft':'ㄽ',
+                   'fx':'ㄾ','fv':'ㄿ','fg':'ㅀ','qt':'ㅄ'}
+
+    def __init__(self):
+        self.han_mode = False
+        self.han_buf = ''     # 조합 중인 로마자 버퍼
+
+    def toggle(self):
+        composed = self._compose(self.han_buf)
+        self.han_buf = ''
+        self.han_mode = not self.han_mode
+        return composed
+
+    def feed(self, ch):
+        """키 입력 → (확정된 텍스트, 현재 조합 미리보기)"""
+        if not self.han_mode or not _HANGUL_OK:
+            return ch, ''
+        self.han_buf += ch
+        preview = self._compose(self.han_buf)
+        return '', preview
+
+    def commit(self):
+        """조합 중인 버퍼 확정"""
+        result = self._compose(self.han_buf)
+        self.han_buf = ''
+        return result
+
+    def backspace(self):
+        """한 글자 지우기 → (True=한글버퍼에서 처리, False=일반 백스페이스)"""
+        if self.han_mode and self.han_buf:
+            self.han_buf = self.han_buf[:-1]
+            preview = self._compose(self.han_buf) if self.han_buf else ''
+            return True, preview
+        return False, ''
+
+    @classmethod
+    def _compose(cls, text):
+        if not text or not _HANGUL_OK:
+            return text
+        result = ''
+        vc = ''
+        for t in text:
+            if t in cls.CONS:   vc += 'c'
+            elif t in cls.VOWELS: vc += 'v'
+            else: vc += '!'
+        vc = vc.replace('cvv','fVV').replace('cv','fv').replace('cc','dd')
+        i = 0
+        while i < len(text):
+            v = vc[i]; t = text[i]; j = 1
+            try:
+                if v in ('f','c'):   result += cls.CONS[t]
+                elif v == 'V':       result += cls.VOWELS[text[i:i+2]]; j=2
+                elif v == 'v':       result += cls.VOWELS[t]
+                elif v == 'd':       result += cls.CONS_DOUBLE[text[i:i+2]]; j=2
+                else:                result += t
+            except Exception:
+                result += t
+            i += j
+        return join_jamos(result)
 
 
 # ── 상태 → 한글 매핑 (이모지 없음) ───────────────────────────
@@ -153,6 +226,8 @@ class LLMInterface:
         self._add_sys('사용 가능한 선반: A-01  A-02  A-03  A-04')
 
         self.input_text   = ''
+        self.han          = KoreanInput()
+        self.han_preview  = ''   # 조합 중 미리보기
         self.cursor_vis   = True
         self.cursor_tick  = 0
         self.chat_scroll  = 0
@@ -405,7 +480,7 @@ class LLMInterface:
         self.cursor_tick += 1
         if self.cursor_tick % 28 == 0:
             self.cursor_vis = not self.cursor_vis
-        display = self.input_text + ('|' if self.cursor_vis else '')
+        display = self.input_text + self.han_preview + ('|' if self.cursor_vis else '')
 
         it = self.font_input.render(display, True, self.C['white'])
         clip_w = inp_rect.width - 16
@@ -413,7 +488,7 @@ class LLMInterface:
             it = it.subsurface((it.get_width() - clip_w, 0, clip_w, it.get_height()))
         self.screen.blit(it, (inp_rect.x + 10, inp_rect.y + (btn_h - it.get_height()) // 2))
 
-        if not self.input_text:
+        if not self.input_text and not self.han_preview:
             ph = self.font_input.render('목적지를 입력하세요 (예: A-01, a-01 가줘)', True, self.C['gray'])
             self.screen.blit(ph, (inp_rect.x + 10, inp_rect.y + (btn_h - ph.get_height()) // 2))
 
@@ -469,11 +544,23 @@ class LLMInterface:
                         if event.key == pygame.K_ESCAPE:
                             running = False
                         elif event.key == pygame.K_RETURN:
+                            self.input_text += self.han.commit()
+                            self.han_preview = ''
                             self._send()
                         elif event.key == pygame.K_BACKSPACE:
-                            self.input_text = self.input_text[:-1]
+                            handled, self.han_preview = self.han.backspace()
+                            if not handled:
+                                self.input_text = self.input_text[:-1]
+                        elif (event.mod & pygame.KMOD_LSHIFT) and event.key == pygame.K_SPACE:
+                            # Left Shift + Space: 한/영 전환
+                            self.input_text += self.han.toggle()
+                            self.han_preview = ''
+                        elif self.han.han_mode and event.unicode and event.unicode.isprintable():
+                            committed, self.han_preview = self.han.feed(event.unicode)
+                            self.input_text += committed
                     elif event.type == pygame.TEXTINPUT:
-                        self.input_text += event.text
+                        if not self.han.han_mode:
+                            self.input_text += event.text
                     elif event.type == pygame.MOUSEBUTTONDOWN:
                         if event.button == 1 and self.send_btn_rect.collidepoint(event.pos):
                             self._send()
