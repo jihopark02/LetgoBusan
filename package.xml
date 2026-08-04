@@ -3,9 +3,9 @@
 <package format="3">
   <name>warehouse_offboard</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>ROS2 + PX4 + Gazebo 기반 자율 드론 창고 재고 관리 시스템 (자연어 명령, GPT 미션 파싱, QR 비전 스캔)</description>
   <maintainer email="jiho@todo.todo">jiho</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

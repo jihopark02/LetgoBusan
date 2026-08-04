@@ -14,6 +14,10 @@ __pycache__/
 *.db3
 .DS_Store
 
+build/
+install/
+log/
+
 .env
 .env.*
 cleanup_archive/
